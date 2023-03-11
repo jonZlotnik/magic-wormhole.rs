@@ -8,7 +8,7 @@ use std::{
 
 use async_std::{fs::OpenOptions, sync::Arc};
 use clap::{Args, CommandFactory, Parser, Subcommand};
-use cli_clipboard::{ClipboardContext, ClipboardProvider};
+use arboard::Clipboard;
 use color_eyre::{eyre, eyre::Context};
 use console::{style, Term};
 use futures::{future::Either, Future, FutureExt};
@@ -283,7 +283,7 @@ async fn main() -> eyre::Result<()> {
             .try_init()?;
     }
 
-    let mut clipboard = ClipboardContext::new()
+    let mut clipboard = Clipboard::new()
         .map_err(|err| {
             log::warn!("Failed to initialize clipboard support: {}", err);
         })
@@ -618,7 +618,7 @@ async fn parse_and_connect(
     print_code: Option<
         &dyn Fn(&mut Term, &magic_wormhole::Code, &Option<url::Url>) -> eyre::Result<()>,
     >,
-    clipboard: Option<&mut ClipboardContext>,
+    clipboard: Option<&mut Clipboard>,
 ) -> eyre::Result<(Wormhole, magic_wormhole::Code, Vec<transit::RelayHint>)> {
     // TODO handle relay servers with multiple endpoints better
     let mut relay_hints: Vec<transit::RelayHint> = common_args
@@ -669,7 +669,7 @@ async fn parse_and_connect(
             /* Print code and also copy it to clipboard */
             if is_send {
                 if let Some(clipboard) = clipboard {
-                    match clipboard.set_contents(server_welcome.code.to_string()) {
+                    match clipboard.set_text(server_welcome.code.to_string()) {
                         Ok(()) => log::info!("Code copied to clipboard"),
                         Err(err) => log::warn!("Failed to copy code to clipboard: {}", err),
                     }
